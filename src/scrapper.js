@@ -16,8 +16,8 @@ async function scrapePositions(tabId, positionType) {
     await page.goto(LOGIN_URL, { waitUntil: "networkidle2" });
 
     console.log("Logging in...");
-    await page.type('input[name="email"]', EMAIL, { delay: 100 }); // Added delay for realism
-    await page.type('input[name="password"]', PASSWORD, { delay: 100 });
+    await page.type('input[name="email"]', EMAIL); // Added delay for realism
+    await page.type('input[name="password"]', PASSWORD);
     await page.click('button[type="submit"]');
 
     // Wait for the dashboard to load
@@ -43,8 +43,7 @@ async function scrapePositions(tabId, positionType) {
 
       rows.forEach((row) => {
         const cells = row.querySelectorAll(".bottom-section-table__element");
-        if (cells.length < 15) {
-          // Ensure there are enough cells
+        if (cells.length < 14) { // Updated to 14 cells
           return;
         }
 
@@ -66,7 +65,7 @@ async function scrapePositions(tabId, positionType) {
           const swap = cells[10]?.textContent.trim() || null;
           const commission = cells[11]?.textContent.trim() || null;
           const profit = cells[12]?.textContent.trim() || null;
-          const reason = cells[14]?.textContent.trim() || null;
+          const reason = cells[13]?.textContent.trim() || null;
 
           data.push({
             order_id,
