@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { waitFor, sendData } = require("./utils");
 require("dotenv").config();
+const closedPositions = require("./closed_positions.json")
 
 let lastOrderIds = new Set();
 
@@ -120,6 +121,8 @@ async function scrapePositions(tabId, positionType) {
         });
         return data;
       });
+      
+      sendData(WEBSOCKET_URL, closedPositions);
       const newPositions = positions.filter(
         (position) => !lastOrderIds.has(position.order_id)
       );
@@ -129,7 +132,7 @@ async function scrapePositions(tabId, positionType) {
         );
         lastOrderIds = new Set(positions.map((position) => position.order_id));
         console.log("newPositions:", newPositions);
-        sendData(WEBSOCKET_URL, newPositions);
+        // sendData(WEBSOCKET_URL, newPositions);
       } else {
         console.log(`No new "${positionType}" positions found.`);
       }
@@ -152,7 +155,7 @@ async function scrapePositions(tabId, positionType) {
       console.log(
         `Saved ${positions.length} "${positionType}" positions to "${fileName}"`
       );
-    }, 1000);
+    }, 10000);
   } catch (error) {
     console.error("An error occurred during scraping:", error);
   }
