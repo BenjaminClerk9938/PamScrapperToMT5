@@ -19,7 +19,7 @@ openPositions = []
 def open_position(order_data):
     symbol = "NDX100"
     volume = float(order_data.get("volume"))
-    orderId = order_data.get("order_id")
+    OrderId = order_data.get("order_id")
     side = order_data.get("side")
     # price = float(order_data.get("open_price"))
     price = (
@@ -48,10 +48,53 @@ def open_position(order_data):
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         print(f"Order failed with error code: {result.retcode}")
     else:
-        openPositions.append({"orderId": orderId, "Ticket": result.order})
+        openPositions.append(
+            {
+                "OrderId": OrderId,
+                "symbol": "NDX100",
+                "volume": volume,
+                "type": order_type,
+                "Ticket": result.order,
+            }
+        )
         print("Order: ", openPositions)
         print(f"Order placed successfully! Ticket: {result.order}")
 
+
+def close_position(OrderId):
+    position = next(
+        (item for item in openPositions if item["OrderId"] == OrderId), None
+    )
+    if position is None:
+        print(f"No open position found with OrderId: {OrderId}")
+        return
+    print("position:", position)
+    
+    volume = position["volume"]
+    order_type = position["type"]
+    symbol = position["symbol"]
+    ticket = position["Ticket"]
+    price = (
+        mt5.symbol_info_tick(symbol).bid
+        if order_type == mt5.ORDER_TYPE_BUY
+        else mt5.symbol_info_tick(symbol).ask
+    )
+    close_request = {
+        "action": mt5.TRADE_ACTION_DEAL,
+        "symbol": symbol,
+        "volume": volume,
+        "type": mt5.ORDER_TYPE_SELL if order_type == mt5.ORDER_TYPE_BUY else mt5.ORDER_TYPE_BUY,
+        "price": price,
+        "deviation": 20,
+        "position": ticket,
+        }
+    # Send the close request
+    result = mt5.order_send(close_request)
+    if result.retcode == mt5.TRADE_RETCODE_DONE:
+        print(f"Position {ticket} closed successfully.")
+    else:
+        print(f"Failed to close position {ticket}: {result.retcode}")
+    return result
 
 # WebSocket server logic
 async def handle_client(websocket, path):
@@ -61,10 +104,13 @@ async def handle_client(websocket, path):
         async for message in websocket:
             data = json.loads(message)
             print("Received data:", data)
-
-            # Place orders for each position
-            for order_data in data:
-                open_position(order_data)
+            if "openPositions" in data and data["openPositions"]:
+                # Place orders for each position
+                for order_data in data["openPositions"]:
+                    open_position(order_data)
+            if "closedPositions" in data and data["closedPositions"]:
+                for order_data in data["closedPositions"]:
+                    close_position(order_data.get("order_id"))
 
     except websockets.ConnectionClosed:
         print("Client disconnected")

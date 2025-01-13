@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { waitFor, sendData } = require("./utils");
 require("dotenv").config();
-const closedPositions = require("./closed_positions.json")
+const closedPositions = require("./closed_positions.json");
 
 let lastOrderIds = new Set();
 
@@ -71,58 +71,25 @@ async function scrapePositions(tabId, positionType) {
 
         rows.forEach((row) => {
           const cells = row.querySelectorAll(".bottom-section-table__element");
-          if (cells.length < 14) return;
+          if (cells.length < 12) return;
 
           const symbol = cells[1]?.textContent.trim();
           if (symbol === "US100") {
-            const order_id = cells[0]?.textContent.trim();
-            const open_time_date = cells[2]
-              ?.querySelectorAll("span")[0]
-              ?.textContent.trim();
-            const open_time_time = cells[2]
-              ?.querySelector(".bottom-section-table__time")
-              ?.textContent.trim();
-            const open_time = `${open_time_date} ${open_time_time}`;
+            const order_id = cells[0]?.textContent.split(" ")[1];
             const volume = cells[3]?.textContent.trim();
             const side = cells[4]?.textContent.trim();
-            const close_time_date = cells[5]
-              ?.querySelector(".bottom-section-table__date")
-              ?.textContent.trim();
-            const close_time_time = cells[5]
-              ?.querySelector(".bottom-section-table__time")
-              ?.textContent.trim();
-            const close_time = `${close_time_date} ${close_time_time}`;
-            const open_price = cells[6]?.textContent.trim();
-            const close_price = cells[7]?.textContent.trim() || null;
-            const stop_loss = cells[8]?.textContent.trim() || null;
-            const take_profit = cells[9]?.textContent.trim() || null;
-            const swap = cells[10]?.textContent.trim() || null;
-            const commission = cells[11]?.textContent.trim() || null;
-            const profit = cells[12]?.textContent.trim() || null;
-            const reason = cells[13]?.textContent.trim() || null;
 
             data.push({
               order_id,
-              symbol,
-              open_time,
               volume,
               side,
-              close_time,
-              open_price,
-              close_price,
-              stop_loss,
-              take_profit,
-              swap,
-              commission,
-              profit,
-              reason,
             });
           }
         });
         return data;
       });
-      
-      sendData(WEBSOCKET_URL, closedPositions);
+
+      sendData(WEBSOCKET_URL, { closedPositions: closedPositions });
       const newPositions = positions.filter(
         (position) => !lastOrderIds.has(position.order_id)
       );
@@ -155,13 +122,13 @@ async function scrapePositions(tabId, positionType) {
       console.log(
         `Saved ${positions.length} "${positionType}" positions to "${fileName}"`
       );
-    }, 10000);
+    }, 1000);
   } catch (error) {
     console.error("An error occurred during scraping:", error);
   }
 }
 
 (async () => {
-  // await scrapePositions("openPositionsTab", "open");
-  await scrapePositions("closedPositionsTab", "closed");
+  await scrapePositions("openPositionsTab", "open");
+  // await scrapePositions("closedPositionsTab", "closed");
 })();
