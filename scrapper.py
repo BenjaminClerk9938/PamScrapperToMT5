@@ -21,7 +21,6 @@ def open_position(order_data):
     volume = float(order_data.get("volume"))
     OrderId = order_data.get("order_id")
     side = order_data.get("side")
-    # price = float(order_data.get("open_price"))
     price = (
         mt5.symbol_info_tick(symbol).ask
         if side == "Buy"
@@ -69,7 +68,7 @@ def close_position(OrderId):
         print(f"No open position found with OrderId: {OrderId}")
         return
     print("position:", position)
-    
+    openPositions.remove(position)
     volume = position["volume"]
     order_type = position["type"]
     symbol = position["symbol"]
@@ -94,6 +93,7 @@ def close_position(OrderId):
         print(f"Position {ticket} closed successfully.")
     else:
         print(f"Failed to close position {ticket}: {result.retcode}")
+    
     return result
 
 # WebSocket server logic

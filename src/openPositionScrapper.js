@@ -3,12 +3,11 @@ const fs = require("fs");
 const path = require("path");
 const { waitFor, sendData } = require("./utils");
 require("dotenv").config();
-const closedPositions = require("./closed_positions.json");
 
 let lastOrderIds = new Set();
 
 async function scrapePositions(tabId, positionType) {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
   try {
@@ -88,8 +87,7 @@ async function scrapePositions(tabId, positionType) {
         });
         return data;
       });
-
-      sendData(WEBSOCKET_URL, { closedPositions: closedPositions });
+      
       const newPositions = positions.filter(
         (position) => !lastOrderIds.has(position.order_id)
       );
@@ -98,6 +96,7 @@ async function scrapePositions(tabId, positionType) {
           `Found ${newPositions.length} new "${positionType}" positions.`
         );
         lastOrderIds = new Set(positions.map((position) => position.order_id));
+        sendData(WEBSOCKET_URL, { openPositions: newPositions });
         console.log("newPositions:", newPositions);
         // sendData(WEBSOCKET_URL, newPositions);
       } else {
@@ -112,16 +111,16 @@ async function scrapePositions(tabId, positionType) {
       }
 
       // Save data to a JSON file
-      const outputDir = path.resolve("./data");
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
+      // const outputDir = path.resolve("./data");
+      // if (!fs.existsSync(outputDir)) {
+      //   fs.mkdirSync(outputDir, { recursive: true });
+      // }
 
-      const fileName = path.join(outputDir, `${positionType}_positions.json`);
-      fs.writeFileSync(fileName, JSON.stringify(positions, null, 2));
-      console.log(
-        `Saved ${positions.length} "${positionType}" positions to "${fileName}"`
-      );
+      // const fileName = path.join(outputDir, `${positionType}_positions.json`);
+      // fs.writeFileSync(fileName, JSON.stringify(positions, null, 2));
+      // console.log(
+      //   `Saved ${positions.length} "${positionType}" positions to "${fileName}"`
+      // );
     }, 1000);
   } catch (error) {
     console.error("An error occurred during scraping:", error);
