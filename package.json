@@ -5,15 +5,20 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "nodemon src/scrapper.js",
-        "start": "node src/scrapper.js"
+        "openscript": "node src/openPositionScrapper.js",
+        "closescript": "node src/closePositionScrapper.js",
+        "start": "concurrently \"npm run openscript\" \"npm run closescript\"",
+        "prestart": "start python scrapper.py"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "concurrently": "^9.1.2",
         "dotenv": "^16.4.7",
         "nodemon": "^3.1.9",
-        "puppeteer": "^24.0.0"
+        "puppeteer": "^24.0.0",
+        "ws": "^8.18.0"
     }
 }
