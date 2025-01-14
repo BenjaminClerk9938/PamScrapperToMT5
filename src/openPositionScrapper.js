@@ -121,7 +121,7 @@ async function scrapePositions(tabId, positionType) {
       // console.log(
       //   `Saved ${positions.length} "${positionType}" positions to "${fileName}"`
       // );
-    }, 1000);
+    }, 100);
   } catch (error) {
     console.error("An error occurred during scraping:", error);
   }

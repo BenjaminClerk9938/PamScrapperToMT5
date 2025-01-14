@@ -21,11 +21,20 @@ def open_position(order_data):
     volume = float(order_data.get("volume"))
     OrderId = order_data.get("order_id")
     side = order_data.get("side")
-    price = (
-        mt5.symbol_info_tick(symbol).ask
-        if side == "Buy"
-        else mt5.symbol_info_tick(symbol).bid
-    )
+    # Ensure the symbol is selected
+    # if not mt5.symbol_select(symbol, True):
+    #     print(
+    #         f"Failed to select symbol {symbol}. Check if it exists or is enabled in MT5."
+    #     )
+    #     return
+
+    # # Get tick data
+    # tick = mt5.symbol_info_tick(symbol)
+    # if tick is None:
+    #     print(f"No tick data available for symbol {symbol}.")
+    #     return
+
+    # price = tick.ask if side == "Buy" else tick.bid
 
     order_type = mt5.ORDER_TYPE_BUY if side == "Buy" else mt5.ORDER_TYPE_SELL
 
@@ -34,7 +43,7 @@ def open_position(order_data):
         "symbol": "NDX100",
         "volume": volume,
         "type": order_type,
-        "price": price,
+        # "price": price,
         "slippage": 10,
         "deviation": 20,
         "magic": 234000,
@@ -73,28 +82,34 @@ def close_position(OrderId):
     order_type = position["type"]
     symbol = position["symbol"]
     ticket = position["Ticket"]
-    price = (
-        mt5.symbol_info_tick(symbol).bid
-        if order_type == mt5.ORDER_TYPE_BUY
-        else mt5.symbol_info_tick(symbol).ask
-    )
+    
+    # price = (
+    #     mt5.symbol_info_tick(symbol).bid
+    #     if order_type == mt5.ORDER_TYPE_BUY
+    #     else mt5.symbol_info_tick(symbol).ask
+    # )
     close_request = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
         "volume": volume,
-        "type": mt5.ORDER_TYPE_SELL if order_type == mt5.ORDER_TYPE_BUY else mt5.ORDER_TYPE_BUY,
-        "price": price,
+        "type": (
+            mt5.ORDER_TYPE_SELL
+            if order_type == mt5.ORDER_TYPE_BUY
+            else mt5.ORDER_TYPE_BUY
+        ),
+        # "price": price,
         "deviation": 20,
         "position": ticket,
-        }
+    }
     # Send the close request
     result = mt5.order_send(close_request)
     if result.retcode == mt5.TRADE_RETCODE_DONE:
         print(f"Position {ticket} closed successfully.")
     else:
         print(f"Failed to close position {ticket}: {result.retcode}")
-    
+
     return result
+
 
 # WebSocket server logic
 async def handle_client(websocket, path):
